@@ -7,9 +7,12 @@ import (
 )
 
 func main() {
-	ps, err := proc.NewStatus(1, "/proc/1/status")
+	procs, err := proc.AllProcs()
 	if err != nil {
-		fmt.Println("Error reading proc status", err)
+		fmt.Println("Error listing all current procs", err)
 	}
-	fmt.Println("peak RSS, RSS", ps.VmHWM, ps.VmRSS)
+	for _, p := range procs {
+		fmt.Printf("%d ", p.PID)
+	}
+	fmt.Println()
 }
