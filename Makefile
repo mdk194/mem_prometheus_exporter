@@ -1,8 +1,5 @@
 SVC=mem_prometheus_exporter
 
-VERSION := $(shell git rev-parse HEAD)
-BUILDDATE := $(shell date -u +"%d-%m-%Y_%H:%M:%S_UTC")
-
 LDFLAGS=-ldflags '-s -w -extldflags "-static"'
 
 .PHONY: default
@@ -14,7 +11,7 @@ test:
 
 .PHONY: bin
 bin: test
-	GO111MODULE=on CGO_ENABLED=0 GOARCH=amd64 go build ${LDFLAGS} -o bin/${SVC}-amd64-linux
+	GO111MODULE=on CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o bin/${SVC}-amd64-linux
 
 .PHONY: install
 install: test
