@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	ps, err := proc.NewStatus(1)
+	ps, err := proc.NewStatus(1, "/proc/1/status")
 	if err != nil {
 		fmt.Println("Error reading proc status", err)
 	}

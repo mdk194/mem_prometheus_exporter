@@ -65,8 +65,8 @@ type ProcStatus struct {
 }
 
 // NewStatus returns the current status information of the process.
-func NewStatus(pid int) (ProcStatus, error) {
-	data, err := readProcStatusFile(pid)
+func NewStatus(pid int, filePath string) (ProcStatus, error) {
+	data, err := readProcStatusFile(filePath)
 	if err != nil {
 		return ProcStatus{}, err
 	}
@@ -148,10 +148,10 @@ func (s *ProcStatus) fillStatus(k string, vString string, vUint uint64, vUintByt
 	}
 }
 
-func readProcStatusFile(pid int) ([]byte, error) {
+func readProcStatusFile(filePath string) ([]byte, error) {
 	const maxBufferSize = 1024 * 512
 
-	f, err := os.Open("/proc/" + strconv.Itoa(pid) + "/status")
+	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
