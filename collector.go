@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
+	"sync"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/mdk194/mem_prometheus_exporter/proc"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ prometheus.Collector = &collector{}
@@ -12,6 +15,51 @@ var _ prometheus.Collector = &collector{}
 type collector struct {
 	ProcessMemory *prometheus.Desc
 	stats         func() ([]proc.ProcStatus, error)
+}
+
+func init() {
+	c := newCollector(stats)
+	prometheus.MustRegister(c)
+}
+
+func stats() ([]proc.ProcStatus, error) {
+	procList, err := proc.AllProcs()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to list processes %v", err)
+	}
+
+	var wg sync.WaitGroup
+	var out []proc.ProcStatus
+	errChan := make(chan error)
+	done := make(chan interface{})
+
+	for _, p := range procList {
+		wg.Add(1)
+
+		// Parallel read status
+		go func(pid int) {
+			defer wg.Done()
+
+			ps, err := proc.NewStatus(pid, fmt.Sprintf("/proc/%d/status", pid))
+			if err != nil {
+				errChan <- err
+			}
+			out = append(out, ps)
+		}(p.PID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case err := <-errChan:
+		return nil, fmt.Errorf("Failed to read status %v", err)
+	}
+
+	return out, nil
 }
 
 func newCollector(stats func() ([]proc.ProcStatus, error)) prometheus.Collector {
